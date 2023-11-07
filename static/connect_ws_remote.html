@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+</head>
+
+<body>
+  <p>WebSocket Sample</p>
+  <p>This page will connect to the server as WebSocket protocol.</p>
+  <p>Also, the connection will be failed as status code 401 randomly.</p>
+  <input id="eventType">
+  <input id="dispMsg">
+  <hr>
+  <p>
+    <input type="text" id="messageInput" placeholder="Enter message here">
+    <button onclick="sendMessage()">Send</button>
+  </p>
+  <hr>
+  <p>
+    <button onclick="closeConnection()">Close Connection</button>
+  </p>
+</body>
+
+</html>
+
+<script type="text/javascript">
+  // 現在のURLを取得
+  const currentUrl = window.location.href;
+
+  // URLオブジェクトを作成
+  const urlObject = new URL(currentUrl);
+
+
+  // FQDNを取得
+  const fqdn = urlObject.host;
+  const wsProtocol = fqdn.startsWith("localhost") ? "ws" : "wss";
+
+  // // GETリクエスト
+  // fetch(`https://${fqdn}/`, { // 保護されたリソースへのURLに置き換えてください。
+  //   method: 'GET',
+  //   headers: {
+  //     'Authorization': 'Bearer ' + accessToken, // Bearerトークンをヘッダーに追加
+  //   }
+  // })
+  //   .then(response => {
+  //     console.log('get response from backend server.');
+  //     if (!response.ok) {
+  //       // サーバーからOKレスポンスが返ってこない場合、エラーをスローする
+  //       throw new Error('Network response was not ok');
+  //     }
+  //   })
+  //   .then(data => console.log(data))  // データをコンソールに出力
+  //   .catch(error => console.error('Error:', error));  // エラーをキャッチしてコンソールに出力
+
+
+  // 1から3の間のランダムな数値を生成
+  const randomNumber = Math.floor(Math.random() * 3) + 1;
+
+  // 数値が1の場合に特定の処理を実行
+  try {
+    if (randomNumber === 1) {
+      console.log("The connection is expected returning 401.");
+      var connection = new WebSocket(`${wsProtocol}://${fqdn}/ws?token=hogehoge`);
+    } else {
+      //WebSocket接続
+      console.log("The connection is expected returning 200.");
+      var connection = new WebSocket(`${wsProtocol}://${fqdn}/ws`);
+    }
+  } catch (error) {
+    console.log(error);
+  }
+
+  //接続通知
+  connection.onopen = function (event) {
+    document.getElementById("eventType").value = "Received connection established event.";
+    document.getElementById("dispMsg").value = event.data;
+  };
+
+  //エラー発生
+  connection.onerror = function (error) {
+    document.getElementById("eventType").value = "Received connection error event.";
+    document.getElementById("dispMsg").value = error.data;
+  };
+
+  //メッセージ受信
+  connection.onmessage = function (event) {
+    document.getElementById("eventType").value = "Received a message.";
+    document.getElementById("dispMsg").value = event.data;
+  };
+
+  //切断
+  connection.onclose = function () {
+    document.getElementById("eventType").value = "Received connection disposed event.";
+    document.getElementById("dispMsg").value = "";
+  };
+
+  // ボタンがクリックされたときに呼び出される関数
+  function sendMessage() {
+    var message = document.getElementById('messageInput').value;
+    connection.send(message);
+    console.log('Sent: ' + message);
+    document.getElementById('messageInput').value = "";
+  }
+
+  function closeConnection() {
+    connection.close();
+    console.log('Close connection');
+  }
+</script>
